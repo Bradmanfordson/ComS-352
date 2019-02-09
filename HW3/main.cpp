@@ -7,21 +7,18 @@
 #include <iostream>
 using namespace std;
 
-void ChildProcess(char[], char[]);
-
-pid_t pid1, pid2, pid;
-int status, i;
-char buf[100];
+int count = 0;
 
 int main(void)
 {
 
     int fd1[2];
     int fd2[2];
-    pid_t childPid;
     int total = 0;
 
-    string buf[100];
+    pid_t childPid;
+
+    char buf[4];
 
     if (pipe(fd1) == -1)
     {
@@ -34,64 +31,59 @@ int main(void)
         return -1;
     }
 
-    if ((childPid = fork()) == -1)
-    { // Fork Failed
+    if ((childPid = fork()) < 0)
+    {
+
         printf("Failed to fork process 1.\n");
         exit(-1);
     }
-
     else if (childPid == 0)
     {
-
-        close(fd1[0]);
-        printf("Starting child process (PID = %i)\n", childPid);
-        char *answer = (char *)malloc(80);
-        string answers[200];
+        // Child Process
+        close(fd1[0]); // close reading of the first pipe so we can write input to parent
+        char input[4];
         int val;
-        int counter;
+        int count = 0;
+
         do
         {
-            counter += 1;
-            printf("Enter an integer between 1 and 255, enter -1 to exit:");
-            scanf("%s", answer);
-            if ((val = atoi(answer)) == 0 || val > 255)
+            count++;
+            printf("Enter: ");
+            cin >> input;
+            if ((val = atoi(input)) == 0 || val > 255)
             {
                 printf("Invalid input, enter an integer between 1 and 255, or -1 to exit.\n");
             }
-            else if (val != -1)
-            {
-                answers[counter] = (char)val;
-                // printf("answers: %c\n", answers[counter]);
-                //pipe to parent process
-            }
             else
             {
-                write(fd1[1], answers, sizeof(answers));
-                printf("Exiting child process...\n");
+                write(fd1[1], input, strlen(input) + 1);
             }
-            printf("\n input: %s\n", answer);
         } while (val != -1);
 
-        close(fd2[0]);
+        close(fd2[1]);
+        read(fd2[0], input, strlen(input) + 1);
+        total += atoi(input);
+        printf("Child received: %i\n", atoi(input));
 
-        exit(0);
+        printf("Total = %i\n", total);
     }
-
     else
     {
         // Parent Process
-        close(fd1[1]);
-        read(fd1[0], buf, sizeof(buf));
 
-        for (string x : buf)
-        {
-            total += stoi(x);
-        }
+        string test[100];
+        close(fd1[1]); // close writing of first pipe so we can read user input from child
+        read(fd1[0], buf, strlen(buf) + 1);
+        close(fd1[0]);
 
-        printf("Total = %i.\n", total);
+        test[count] = atoi(buf);
+
+        printf("Parent recieved: %i\n", atoi(buf));
+
+        printf("Sending back to child to print\n");
+        close(fd2[0]);
+        write(fd2[1], test, 200);
     }
-
-    printf("Exiting pid %i\n", getpid());
 
     return 0;
 }
