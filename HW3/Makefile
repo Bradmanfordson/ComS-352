@@ -1,7 +1,7 @@
-all: clean parse
+all: clean create
 
-parse: main.c
-	gcc main.c -o main
+create: main.cpp
+	g++ main.cpp -o main
 
 clean:
 	rm -rf main

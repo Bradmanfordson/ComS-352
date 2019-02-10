@@ -3,14 +3,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-
-int count = 0;
+using namespace std;
 
 int main(void)
 {
 
-    int fd1[2];
-    int fd2[2];
+    int pipe1[2];
+    int pipe2[2];
     int total = 0;
 
     pid_t childPid;

@@ -1,88 +1,78 @@
-#include <stdio.h>
+// Allen Bradley Roberts
+// Computer Science 352 - Operating Systems
+// February 9, 2019
+
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <string>
 #include <iostream>
-using namespace std;
-
-int count = 0;
 
 int main(void)
 {
 
-    int fd1[2];
-    int fd2[2];
+    int pipe1[2], pipe2[2];
+
     int total = 0;
 
     pid_t childPid;
 
     char buf[4];
 
-    if (pipe(fd1) == -1)
+    //create pipes
+    if (pipe(pipe1) == -1)
     {
-        printf("Pipe error.\n");
-        return -1;
+        std::cout << "Pipe1 error." << std::endl;
+        exit(1);
     }
-    if (pipe(fd2) == -1)
+    if (pipe(pipe2) == -1)
     {
-        printf("Pipe error.\n");
-        return -1;
+        std::cout << "Pipe2 error." << std::endl;
+        exit(1);
     }
 
-    if ((childPid = fork()) < 0)
+    if ((childPid = fork()) < 0) // Child process failed to start
     {
 
-        printf("Failed to fork process 1.\n");
-        exit(-1);
+        printf("Failed to fork process.\n");
+        exit(1);
     }
-    else if (childPid == 0)
+    else if (childPid == 0) // Child Process sucessful
     {
-        // Child Process
-        close(fd1[0]); // close reading of the first pipe so we can write input to parent
-        char input[4];
-        int val;
-        int count = 0;
+        int input = 0;
 
-        do
+        while (input != -1)
         {
-            count++;
-            printf("Enter: ");
-            cin >> input;
-            if ((val = atoi(input)) == 0 || val > 255)
+            std::cout << "Enter an integer between 1 and 255, enter -1 to exit: ";
+            std::cin >> input;
+            std::cout << std::endl;
+            if (input < 255)
             {
-                printf("Invalid input, enter an integer between 1 and 255, or -1 to exit.\n");
+                close(pipe1[0]);            // close reading of the first pipe so we can write input to parent
+                write(pipe1[1], &input, 1); // send input to parent to be added.
             }
             else
             {
-                write(fd1[1], input, strlen(input) + 1);
+                std::cout << "Invalid input." << std::endl;
             }
-        } while (val != -1);
-
-        close(fd2[1]);
-        read(fd2[0], input, strlen(input) + 1);
-        total += atoi(input);
-        printf("Child received: %i\n", atoi(input));
-
-        printf("Total = %i\n", total);
+        }
+        close(pipe2[1]);                       // close writing of second pipe
+        read(pipe2[0], &total, sizeof(total)); // read from parent to be printed
+        std::cout << "Total: " << total << std::endl;
     }
-    else
+    else // Parent Process
     {
-        // Parent Process
 
-        string test[100];
-        close(fd1[1]); // close writing of first pipe so we can read user input from child
-        read(fd1[0], buf, strlen(buf) + 1);
-        close(fd1[0]);
+        int childInput = 0;
 
-        test[count] = atoi(buf);
+        do
+        {
+            total = total + childInput;
+            close(pipe1[1]);
+            read(pipe1[0], &childInput, 1); // get from child to be added.
+        } while (childInput != 255);
 
-        printf("Parent recieved: %i\n", atoi(buf));
-
-        printf("Sending back to child to print\n");
-        close(fd2[0]);
-        write(fd2[1], test, 200);
+        close(pipe2[0]);
+        write(pipe2[1], &total, sizeof(total)); // send back to child to be printed
     }
 
     return 0;
