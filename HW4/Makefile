@@ -1,7 +1,7 @@
 all: clean create
 
 create: main.c
-	gcc main.c -o main
+	gcc main.c -lpthread -o main
 
 clean:
 	rm -rf main

@@ -3,26 +3,24 @@
 #include <unistd.h>
 #include <pthread.h>
 
-extern void *world();
-extern void *hello();
-extern void *exclamation();
+void *world();
+void *hello();
+void *exclamation();
 
 int main(int argc, char *argv[])
 {
-    pthread_t helloID;
-    pthread_t worldID;
-    pthread_t exclamID;
 
-    pthread_create(&helloID, NULL, hello, NULL);
-    pthread_create(&worldID, NULL, world, NULL);
-    pthread_create(&exclamID, NULL, exclamation, NULL);
-    pthread_join(helloID, NULL);
-    pthread_join(worldID, NULL);
-    pthread_join(exclamID, NULL);
+    pthread_t thread[2];
 
-    // world();
-    // hello();
-    // exclamation();
+    pthread_create(&thread[0], NULL, world, NULL);
+    pthread_create(&thread[1], NULL, hello, NULL);
+    pthread_create(&thread[2], NULL, exclamation, NULL);
+
+    for (int j = 0; j < 3; j++)
+    {
+        pthread_join(thread[j], NULL);
+    }
+
     printf("\n");
 
     return 0;
@@ -30,35 +28,17 @@ int main(int argc, char *argv[])
 
 void *world()
 {
-    printf(" world");
-    return NULL;
+    usleep(400);
+    printf("world");
 }
 
 void *hello()
 {
-    printf("Hello");
-    return NULL;
+    printf("Hello ");
 }
 
 void *exclamation()
 {
+    usleep(600);
     printf("!");
-    return NULL;
 }
-// int world(void)
-// {
-//     printf(" world");
-//     return 0;
-// }
-
-// int hello(void)
-// {
-//     printf("hello ");
-//     return NULL;
-// }
-
-// int exclamation(void)
-// {
-//     printf("!");
-//     return 0;
-// }
