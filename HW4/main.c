@@ -1,3 +1,5 @@
+// Allen Bradley Roberts
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,17 +12,10 @@ void *exclamation();
 int main(int argc, char *argv[])
 {
 
-    pthread_t thread[2];
+    pthread_t thread;
 
-    pthread_create(&thread[0], NULL, world, NULL);
-    pthread_create(&thread[1], NULL, hello, NULL);
-    pthread_create(&thread[2], NULL, exclamation, NULL);
-
-    for (int j = 0; j < 3; j++)
-    {
-        pthread_join(thread[j], NULL);
-    }
-
+    pthread_create(&thread, NULL, world, NULL);
+    pthread_join(thread, NULL);
     printf("\n");
 
     return 0;
@@ -28,8 +23,16 @@ int main(int argc, char *argv[])
 
 void *world()
 {
-    usleep(400);
+    pthread_t thread1;
+    pthread_t thread2;
+
+    pthread_create(&thread1, NULL, hello, NULL);
+    pthread_join(thread1, NULL);
+
     printf("world");
+
+    pthread_create(&thread2, NULL, exclamation, NULL);
+    pthread_join(thread2, NULL);
 }
 
 void *hello()
@@ -39,6 +42,5 @@ void *hello()
 
 void *exclamation()
 {
-    usleep(600);
     printf("!");
 }
